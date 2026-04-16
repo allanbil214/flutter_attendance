@@ -13,10 +13,15 @@ class AdminHomeScreen extends StatefulWidget {
   State<AdminHomeScreen> createState() => _AdminHomeScreenState();
 }
 
-class _AdminHomeScreenState extends State<AdminHomeScreen> {
+class _AdminHomeScreenState extends State<AdminHomeScreen>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = false;
   int _notificationCount = 3;
   bool _showNotifications = false;
+  bool _isFabOpen = false;
+  late AnimationController _fabAnimationController;
+  late Animation<double> _fabRotation;
+  late Animation<double> _fabScale;
   
   // Dummy notifications
   final List<Map<String, dynamic>> _notifications = [
@@ -97,6 +102,47 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     'late': 1,
     'gpsOff': 1,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _fabAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+    _fabRotation = Tween<double>(begin: 0.0, end: 0.625).animate(
+      CurvedAnimation(parent: _fabAnimationController, curve: Curves.easeInOut),
+    );
+    _fabScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fabAnimationController, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _fabAnimationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleFab() {
+    setState(() {
+      _isFabOpen = !_isFabOpen;
+      if (_isFabOpen) {
+        _fabAnimationController.forward();
+      } else {
+        _fabAnimationController.reverse();
+      }
+    });
+  }
+
+  void _closeFab() {
+    if (_isFabOpen) {
+      setState(() {
+        _isFabOpen = false;
+        _fabAnimationController.reverse();
+      });
+    }
+  }
 
   Future<void> _refreshData() async {
     setState(() => _isLoading = true);
@@ -328,6 +374,21 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   ),
           ),
           
+          // Backdrop to close FAB when tapping outside
+          if (_isFabOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _closeFab,
+                child: AnimatedOpacity(
+                  opacity: _isFabOpen ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
+            ),
+
           // Notifications Dropdown
           if (_showNotifications)
             Positioned(
@@ -391,42 +452,112 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             ),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _buildFab(
-            icon: Icons.person_add,
-            label: 'Karyawan',
-            color: AppColors.adminPrimary,
-            onTap: () => context.push('/admin-input-karyawan'),
-          ),
-          const SizedBox(height: 12),
-          _buildFab(
-            icon: Icons.business,
-            label: 'Organisasi',
-            color: AppColors.adminPrimary,
-            onTap: () => context.push('/admin-organisasi'),
-          ),
-          const SizedBox(height: 12),
-          _buildFab(
-            icon: Icons.notifications,
-            label: 'Notifikasi',
-            color: AppColors.adminPrimary,
-            onTap: () => context.push('/admin-kirim-notif'),
-          ),
-          const SizedBox(height: 12),
-          _buildFab(
-            icon: Icons.logout,
-            label: 'Logout',
-            color: Colors.red,
-            onTap: _showLogoutDialog,
-          ),
-        ],
-      ),
+      
+      floatingActionButton: _buildSpeedDial(),
+
     );
   }
 
-  Widget _buildFab({
+  Widget _buildSpeedDial() {
+    final List<Map<String, dynamic>> fabItems = [
+      {
+        'icon': Icons.person_add,
+        'label': 'Karyawan',
+        'color': AppColors.adminPrimary,
+        'onTap': () { _closeFab(); context.push('/admin-input-karyawan'); },
+      },
+      {
+        'icon': Icons.business,
+        'label': 'Organisasi',
+        'color': AppColors.adminPrimary,
+        'onTap': () { _closeFab(); context.push('/admin-organisasi'); },
+      },
+      {
+        'icon': Icons.notifications,
+        'label': 'Notifikasi',
+        'color': AppColors.adminPrimary,
+        'onTap': () { _closeFab(); context.push('/admin-kirim-notif'); },
+      },
+      {
+        'icon': Icons.settings,
+        'label': 'Settings',
+        'color': AppColors.adminPrimary,
+        'onTap': () { _closeFab(); context.push('/admin-settings'); },
+      },
+      {
+        'icon': Icons.logout,
+        'label': 'Logout',
+        'color': Colors.red,
+        'onTap': () { _closeFab(); _showLogoutDialog(); },
+      },
+    ];
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Speed dial items — staggered from top (index 0) down to closest (index 4)
+        ...fabItems.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          final staggeredBegin = (fabItems.length - 1 - index) * 0.12;
+          final staggerEnd = (staggeredBegin + 0.5).clamp(0.0, 1.0);
+          final itemAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(
+              parent: _fabAnimationController,
+              curve: Interval(staggeredBegin, staggerEnd, curve: Curves.easeOut),
+            ),
+          );
+          return AnimatedBuilder(
+            animation: itemAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, 20 * (1 - itemAnimation.value)),
+                child: Opacity(
+                  opacity: itemAnimation.value.clamp(0.0, 1.0),
+                  child: child,
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildSpeedDialItem(
+                icon: item['icon'] as IconData,
+                label: item['label'] as String,
+                color: item['color'] as Color,
+                onTap: item['onTap'] as VoidCallback,
+              ),
+            ),
+          );
+        }).toList(),
+
+        // Main FAB with rotating icon
+        AnimatedBuilder(
+          animation: _fabRotation,
+          builder: (context, child) {
+            return Transform.rotate(
+              angle: _fabRotation.value * 2 * 3.14159,
+              child: child,
+            );
+          },
+          child: FloatingActionButton(
+            onPressed: _toggleFab,
+            backgroundColor: _isFabOpen ? Colors.grey.shade700 : AppColors.adminPrimary,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                _isFabOpen ? Icons.close : Icons.menu,
+                key: ValueKey(_isFabOpen),
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSpeedDialItem({
     required IconData icon,
     required String label,
     required Color color,
@@ -434,34 +565,51 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Label pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Text(
+            child: Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 10),
+          // Mini FAB circle
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+        ],
       ),
     );
   }

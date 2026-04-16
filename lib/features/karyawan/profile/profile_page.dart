@@ -129,6 +129,14 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 children: [
                   _ActionTile(
+                    icon: Icons.settings,
+                    title: 'Pengaturan',
+                    onTap: () {
+                      context.push('/karyawan-settings');
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _ActionTile(
                     icon: Icons.lock_outline,
                     title: 'Ganti Password',
                     onTap: () {

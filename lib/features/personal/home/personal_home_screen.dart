@@ -122,12 +122,20 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
             gradient: AppColors.personalGradient,
           ),
         ),
+
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              context.push('/personal-settings');
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshData,
           ),
         ],
+
       ),
       body: RefreshIndicator(
         onRefresh: _refreshData,

@@ -32,14 +32,15 @@ import '../features/personal/home/personal_home_screen.dart';
 import '../features/personal/upload/personal_upload_screen.dart';
 import '../features/personal/galeri/galeri_aktivitas_screen.dart';
 
-
-import '../features/settings/settings_screen.dart';
 import '../features/settings/about_screen.dart';
 import '../features/settings/terms_screen.dart';
 import '../features/settings/qris_screen.dart';
 import '../features/settings/webview_screen.dart';
 import '../features/settings/version_screen.dart';
 
+import '../features/karyawan/settings/karyawan_settings_screen.dart';
+import '../features/admin/settings/admin_settings_screen.dart';
+import '../features/personal/settings/personal_settings_screen.dart';
 
 // Temporary placeholders for Phase 1.2, 1.3, 1.4
 // Remove these when actual screens are created
@@ -343,14 +344,6 @@ class AppRouter {
           ),
 
           GoRoute(
-            path: '/settings',
-            name: 'settings',
-            pageBuilder: (context, state) => MaterialPage(
-              key: state.pageKey,
-              child: const SettingsScreen(),
-            ),
-          ),
-          GoRoute(
             path: '/about',
             name: 'about',
             pageBuilder: (context, state) => MaterialPage(
@@ -394,6 +387,31 @@ class AppRouter {
             pageBuilder: (context, state) => MaterialPage(
               key: state.pageKey,
               child: const VersionScreen(),
+            ),
+          ),
+
+          GoRoute(
+            path: '/karyawan-settings',
+            name: 'karyawan-settings',
+            pageBuilder: (context, state) => MaterialPage(
+              key: state.pageKey,
+              child: const KaryawanSettingsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/admin-settings',
+            name: 'admin-settings',
+            pageBuilder: (context, state) => MaterialPage(
+              key: state.pageKey,
+              child: const AdminSettingsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/personal-settings',
+            name: 'personal-settings',
+            pageBuilder: (context, state) => MaterialPage(
+              key: state.pageKey,
+              child: const PersonalSettingsScreen(),
             ),
           ),
 
