@@ -17,7 +17,6 @@ class ApiClient {
       },
     ));
     
-    // Add logging interceptor for debugging
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         _logger.i('📤 REQUEST: ${options.method} ${options.path}');
@@ -86,6 +85,42 @@ class ApiClient {
       return {
         'success': true,
         'message': 'Logout successful',
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> getActivities({String status = 'active'}) async {
+    try {
+      final response = await _dio.get(
+        '/activities/list.php',
+        queryParameters: {'status': status},
+      );
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return Map<String, dynamic>.from(e.response!.data);
+      }
+      return {
+        'success': false,
+        'message': 'Failed to load activities',
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> getTodayAttendanceStatus(String activityId) async {
+    try {
+      final response = await _dio.get(
+        '/attendance/status.php',
+        queryParameters: {'activity_id': activityId},
+      );
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return Map<String, dynamic>.from(e.response!.data);
+      }
+      return {
+        'success': false,
+        'message': 'Failed to load attendance status',
       };
     }
   }

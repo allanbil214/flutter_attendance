@@ -4,8 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../widgets/aktivitas_card.dart';
 import '../../../core/widgets/animations/fade_in_slide.dart';
-import '../../../data/datasources/local/shared_prefs_helper.dart';
-import '../../../data/datasources/remote/api_client.dart';
+import '../../../core/services/logout_service.dart';
 
 class PersonalHomeScreen extends StatefulWidget {
   const PersonalHomeScreen({super.key});
@@ -76,52 +75,6 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
     setState(() => _isLoading = false);
   }
 
-  Future<void> _logout() async {
-    // Call logout API
-    final apiClient = ApiClient();
-    await apiClient.logout();
-    
-    // Clear personal session
-    await SharedPrefsHelper.clearPersonalSession();
-    
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Anda telah logout'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      context.go('/login-method');
-    }
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final filteredActivities = _filteredActivities;
@@ -135,20 +88,16 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
             gradient: AppColors.personalGradient,
           ),
         ),
-
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              context.push('/personal-settings');
-            },
+            onPressed: () => context.push('/personal-settings'),
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshData,
           ),
         ],
-
       ),
       body: RefreshIndicator(
         onRefresh: _refreshData,
@@ -168,7 +117,7 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
                     Container(
                       width: 60,
                       height: 60,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
@@ -204,9 +153,10 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
                         ],
                       ),
                     ),
+                    // ← replaced inline _showLogoutDialog with LogoutService
                     IconButton(
                       icon: const Icon(Icons.logout, color: Colors.white),
-                      onPressed: _showLogoutDialog,
+                      onPressed: () => LogoutService.showLogoutDialog(context),
                     ),
                   ],
                 ),
@@ -237,9 +187,7 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
                             lastDate: DateTime.now(),
                           );
                           if (date != null) {
-                            setState(() {
-                              _selectedDate = date;
-                            });
+                            setState(() => _selectedDate = date);
                           }
                         },
                         child: Container(
@@ -264,11 +212,7 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
                               if (_selectedDate != null)
                                 IconButton(
                                   icon: const Icon(Icons.close, size: 16),
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedDate = null;
-                                    });
-                                  },
+                                  onPressed: () => setState(() => _selectedDate = null),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
                                 ),
@@ -290,10 +234,7 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   '${filteredActivities.length} aktivitas ditemukan',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ),
             ),
@@ -319,9 +260,7 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
-                            onPressed: () {
-                              context.push('/personal-upload');
-                            },
+                            onPressed: () => context.push('/personal-upload'),
                             icon: const Icon(Icons.add),
                             label: const Text('Buat Aktivitas Baru'),
                             style: ElevatedButton.styleFrom(
@@ -360,9 +299,7 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/personal-upload');
-        },
+        onPressed: () => context.push('/personal-upload'),
         backgroundColor: AppColors.personalPrimary,
         child: const Icon(Icons.add),
       ),
@@ -391,9 +328,7 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Hapus'),
           ),
         ],

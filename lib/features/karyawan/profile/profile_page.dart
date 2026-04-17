@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:smartpresensi/data/datasources/local/shared_prefs_helper.dart';
 import '../../../core/constants/colors.dart';
+import '../../../core/services/logout_service.dart';
 import 'ganti_password_screen.dart';
-import '../../../data/datasources/local/shared_prefs_helper.dart';
-import '../../../data/datasources/remote/api_client.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -133,9 +131,7 @@ class ProfilePage extends StatelessWidget {
                   _ActionTile(
                     icon: Icons.settings,
                     title: 'Pengaturan',
-                    onTap: () {
-                      context.push('/karyawan-settings');
-                    },
+                    onTap: () => context.push('/karyawan-settings'),
                   ),
                   const SizedBox(height: 8),
                   _ActionTile(
@@ -151,14 +147,13 @@ class ProfilePage extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 8),
+                  // ← replaced inline _showLogoutDialog with LogoutService
                   _ActionTile(
                     icon: Icons.logout,
                     title: 'Logout',
                     iconColor: Colors.red,
                     titleColor: Colors.red,
-                    onTap: () {
-                      _showLogoutDialog(context);
-                    },
+                    onTap: () => LogoutService.showLogoutDialog(context),
                   ),
                 ],
               ),
@@ -170,51 +165,6 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              // Show loading
-              Navigator.pop(context);
-              
-              // Call logout API
-              final apiClient = ApiClient();
-              await apiClient.logout();
-              
-              // Clear session
-              await SharedPrefsHelper.clearUserSession();
-              
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Anda telah logout'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                context.go('/login-method');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
-
 }
 
 class _InfoTile extends StatelessWidget {

@@ -4,8 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../widgets/admin_kegiatan_card.dart';
 import '../../../core/widgets/animations/fade_in_slide.dart';
-import '../../../data/datasources/local/shared_prefs_helper.dart';
-import '../../../data/datasources/remote/api_client.dart';
+import '../../../core/services/logout_service.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -455,7 +454,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
       ),
       
       floatingActionButton: _buildSpeedDial(),
-
     );
   }
 
@@ -489,7 +487,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
         'icon': Icons.logout,
         'label': 'Logout',
         'color': Colors.red,
-        'onTap': () { _closeFab(); _showLogoutDialog(); },
+        'onTap': () { _closeFab(); LogoutService.showLogoutDialog(context); }, // ← changed
       },
     ];
 
@@ -497,7 +495,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Speed dial items — staggered from top (index 0) down to closest (index 4)
         ...fabItems.asMap().entries.map((entry) {
           final index = entry.key;
           final item = entry.value;
@@ -569,7 +566,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Label pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -593,7 +589,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
             ),
           ),
           const SizedBox(width: 10),
-          // Mini FAB circle
           Container(
             width: 44,
             height: 44,
@@ -687,50 +682,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
       ),
     );
   }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              
-              // Call logout API
-              final apiClient = ApiClient();
-              await apiClient.logout();
-              
-              // Clear admin session
-              await SharedPrefsHelper.clearAdminSession();
-              
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Anda telah logout'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                context.go('/login-method');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
-  
 }
 
 class _StatCircle extends StatelessWidget {
