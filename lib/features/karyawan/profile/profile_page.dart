@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smartpresensi/data/datasources/local/shared_prefs_helper.dart';
 import '../../../core/constants/colors.dart';
 import 'ganti_password_screen.dart';
+import '../../../data/datasources/local/shared_prefs_helper.dart';
+import '../../../data/datasources/remote/api_client.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -183,9 +185,25 @@ class ProfilePage extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              await SharedPrefsHelper.clearUserSession();
+              // Show loading
               Navigator.pop(context);
-              context.go('/login-method');
+              
+              // Call logout API
+              final apiClient = ApiClient();
+              await apiClient.logout();
+              
+              // Clear session
+              await SharedPrefsHelper.clearUserSession();
+              
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Anda telah logout'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                context.go('/login-method');
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -196,6 +214,7 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+
 }
 
 class _InfoTile extends StatelessWidget {

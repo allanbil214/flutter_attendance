@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/datasources/local/shared_prefs_helper.dart';
+import '../../../data/datasources/remote/api_client.dart';
 
 class OrganisasiScreen extends StatefulWidget {
   const OrganisasiScreen({super.key});
@@ -31,8 +32,20 @@ class _OrganisasiScreenState extends State<OrganisasiScreen> {
   }
 
   Future<void> _logout() async {
+    // Call logout API
+    final apiClient = ApiClient();
+    await apiClient.logout();
+    
+    // Clear admin session
     await SharedPrefsHelper.clearAdminSession();
+    
     if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Anda telah logout'),
+          backgroundColor: Colors.green,
+        ),
+      );
       context.go('/login-method');
     }
   }

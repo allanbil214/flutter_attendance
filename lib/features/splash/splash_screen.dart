@@ -53,23 +53,40 @@ class _SplashScreenState extends State<SplashScreen>
     final isFirstLaunch = await SharedPrefsHelper.isFirstLaunch();
     
     if (isFirstLaunch) {
-      // First time user -> Show onboarding
       context.go('/onboarding');
-    } else {
-      // Returning user -> Check for existing sessions
-      final isUserLoggedIn = SharedPrefsHelper.isUserLoggedIn();
-      final isAdminLoggedIn = SharedPrefsHelper.isAdminLoggedIn();
-      
-      if (isUserLoggedIn) {
-        // Karyawan already logged in
-        context.go('/karyawan-home');
-      } else if (isAdminLoggedIn) {
-        // Admin already logged in
-        context.go('/admin-home');
-      } else {
-        // No session -> Go to login method
+      return;
+    }
+    
+    // Check for existing sessions
+    final sessionType = SharedPrefsHelper.getSessionType();
+    
+    switch (sessionType) {
+      case 'karyawan':
+        if (SharedPrefsHelper.isUserLoggedIn()) {
+          context.go('/karyawan-home');
+        } else {
+          context.go('/login-method');
+        }
+        break;
+        
+      case 'admin':
+        if (SharedPrefsHelper.isAdminLoggedIn()) {
+          context.go('/admin-home');
+        } else {
+          context.go('/login-method');
+        }
+        break;
+        
+      case 'personal':
+        if (SharedPrefsHelper.isPersonalLoggedIn()) {
+          context.go('/personal-home');
+        } else {
+          context.go('/login-method');
+        }
+        break;
+        
+      default:
         context.go('/login-method');
-      }
     }
   }
 
@@ -131,7 +148,7 @@ class _SplashScreenState extends State<SplashScreen>
                 },
               ),
               const SizedBox(height: 40),
-              // App name with fade animation
+              // App name
               const FadeInSlide(
                 duration: Duration(milliseconds: 800),
                 offset: Offset(0, 20),

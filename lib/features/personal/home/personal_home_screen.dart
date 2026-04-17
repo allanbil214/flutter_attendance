@@ -5,6 +5,7 @@ import '../../../core/constants/colors.dart';
 import '../widgets/aktivitas_card.dart';
 import '../../../core/widgets/animations/fade_in_slide.dart';
 import '../../../data/datasources/local/shared_prefs_helper.dart';
+import '../../../data/datasources/remote/api_client.dart';
 
 class PersonalHomeScreen extends StatefulWidget {
   const PersonalHomeScreen({super.key});
@@ -76,8 +77,20 @@ class _PersonalHomeScreenState extends State<PersonalHomeScreen> {
   }
 
   Future<void> _logout() async {
-    await SharedPrefsHelper.clearUserSession();
+    // Call logout API
+    final apiClient = ApiClient();
+    await apiClient.logout();
+    
+    // Clear personal session
+    await SharedPrefsHelper.clearPersonalSession();
+    
     if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Anda telah logout'),
+          backgroundColor: Colors.green,
+        ),
+      );
       context.go('/login-method');
     }
   }

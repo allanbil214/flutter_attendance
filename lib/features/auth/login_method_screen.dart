@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:smartpresensi/data/datasources/local/shared_prefs_helper.dart';
+import 'package:smartpresensi/data/datasources/remote/api_client.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/animations/fade_in_slide.dart';
@@ -310,13 +312,13 @@ class _LoginMethodScreenState extends State<LoginMethodScreen>
   void _handleRoleSelection() {
     switch (_selectedRole) {
       case RoleType.karyawan:
-        context.push('/login-karyawan');
+        context.push('/login', extra: 'karyawan');
         break;
       case RoleType.perusahaan:
-        context.push('/login-perusahaan');
+        context.push('/login', extra: 'perusahaan');
         break;
       case RoleType.personal:
-        context.push('/personal-login');
+        context.push('/login', extra: 'personal');
         break;
     }
   }
@@ -377,34 +379,100 @@ class _LoginMethodScreenState extends State<LoginMethodScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Debug Shortcuts',
+              'Debug Shortcuts - Real Users',
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              'Login as real users from database',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
             const SizedBox(height: 16),
-            _buildDebugButton('Karyawan Home', () {
-              Navigator.pop(context);
-              context.push('/karyawan-home');
-            }),
+            
+            // Karyawan: Budi Santoso (id=5)
+            _buildDebugUserButton(
+              title: '👤 Karyawan - Budi Santoso',
+              subtitle: 'budi.santoso@gmail.com',
+              email: 'budi.santoso@gmail.com',
+              password: 'qweasdzxc', // You need the actual plain password
+              roleHint: 'karyawan',
+            ),
             const SizedBox(height: 8),
-            _buildDebugButton('Admin Home', () {
-              Navigator.pop(context);
-              context.push('/admin-home');
-            }),
+            
+            // Karyawan: Siti Aminah (id=4)
+            _buildDebugUserButton(
+              title: '👩 Karyawan - Siti Aminah',
+              subtitle: 'siti.aminah@gmail.com',
+              email: 'siti.aminah@gmail.com',
+              password: 'qweasdzxc',
+              roleHint: 'karyawan',
+            ),
             const SizedBox(height: 8),
-            _buildDebugButton('Personal Home', () {
-              Navigator.pop(context);
-              context.push('/personal-home');
-            }),
+            
+            // Admin: Andi Firmansyah (id=3) - actually admin of org000000001aalf
+            _buildDebugUserButton(
+              title: '👨‍💼 Admin - Andi Firmansyah',
+              subtitle: 'admin.alfitrah@gmail.com',
+              email: 'admin.alfitrah@gmail.com',
+              password: 'qweasdzxc',
+              roleHint: 'perusahaan',
+            ),
+            const SizedBox(height: 8),
+            
+            // Owner: Nahdani (id=2) - owner of org000000001aalf
+            _buildDebugUserButton(
+              title: '👑 Owner - Nahdani',
+              subtitle: 'nahdani.edu@gmail.com',
+              email: 'nahdani.edu@gmail.com',
+              password: 'qweasdzxc',
+              roleHint: 'perusahaan',
+            ),
+            const SizedBox(height: 8),
+            
+            // Admin Barani: Eko Wahyuning (id=7)
+            _buildDebugUserButton(
+              title: '🏢 Admin Barani - Eko Wahyuning',
+              subtitle: 'admin.barani@gmail.com',
+              email: 'admin.barani@gmail.com',
+              password: 'qweasdzxc',
+              roleHint: 'perusahaan',
+            ),
+            const SizedBox(height: 8),
+            
+            // Karyawan Barani: Riska Dewi (id=8)
+            _buildDebugUserButton(
+              title: '👩 Karyawan Barani - Riska Dewi',
+              subtitle: 'riska.dewi@gmail.com',
+              email: 'riska.dewi@gmail.com',
+              password: 'qweasdzxc',
+              roleHint: 'karyawan',
+            ),
+            const SizedBox(height: 8),
+            
+            // Super Admin (id=1) - blocked
+            _buildDebugUserButton(
+              title: '⭐ Super Admin (Web Only)',
+              subtitle: 'superadmin@kontrolactivity.com',
+              email: 'superadmin@kontrolactivity.com',
+              password: 'qweasdzxc',
+              roleHint: 'super_admin',
+              isBlocked: true,
+            ),
+            _buildDebugUserButton(
+              title: '👤 Personal - Personal User',
+              subtitle: 'personal.user1@test.com',
+              email: 'personal.user1@test.com',
+              password: 'personal123',
+              roleHint: 'personal',
+            ),
+            
             const SizedBox(height: 16),
             Text(
-              '⚠️ For development only',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
+              '⚠️ Passwords are hashed in DB - use actual plain passwords',
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
             ),
           ],
         ),
@@ -412,27 +480,133 @@ class _LoginMethodScreenState extends State<LoginMethodScreen>
     );
   }
 
-  Widget _buildDebugButton(String title, VoidCallback onTap) {
+  Widget _buildDebugUserButton({
+    required String title,
+    required String subtitle,
+    required String email,
+    required String password,
+    required String roleHint,
+    bool isBlocked = false,
+  }) {
     return InkWell(
-      onTap: onTap,
+      onTap: isBlocked ? null : () async {
+        Navigator.pop(context); // Close bottom sheet
+        
+        // Show loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Logging in...')),
+        );
+        
+        // Call actual login API
+        final apiClient = ApiClient();
+        final response = await apiClient.login(email, password);
+        
+        if (response['success'] == true) {
+          final userData = response['data'];
+          final role = userData['role'];
+          
+          // Save session based on role
+          if (role == 'karyawan') {
+            await SharedPrefsHelper.saveUserSession(
+              userId: userData['user_id'],
+              email: userData['email'],
+              name: userData['name'],
+              role: role,
+              organizationId: userData['organization_id'],
+              organizationName: userData['organization_name'],
+              phone: userData['phone'],
+              photoPath: userData['photo_path'],
+            );
+            if (context.mounted) {
+              context.go('/karyawan-home');
+            }
+          } else if (role == 'admin' || role == 'owner') {
+            await SharedPrefsHelper.saveAdminSession(
+              userId: userData['user_id'],
+              email: userData['email'],
+              name: userData['name'],
+              role: role,
+              organizationId: userData['organization_id'],
+              organizationName: userData['organization_name'],
+              phone: userData['phone'],
+              photoPath: userData['photo_path'],
+            );
+            if (context.mounted) {
+              context.go('/admin-home');
+            }
+          } else if (role == 'personal') {
+            await SharedPrefsHelper.savePersonalSession(
+              userId: userData['user_id'],
+              email: userData['email'],
+              name: userData['name'],
+              phone: userData['phone'],
+              photoPath: userData['photo_path'],
+            );
+            if (context.mounted) {
+              context.go('/personal-home');
+            }
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['message'] ?? 'Login failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: isBlocked ? Colors.grey.shade100 : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isBlocked ? Colors.grey.shade300 : Colors.grey.shade200,
+          ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.chevron_right, size: 20),
-            const SizedBox(width: 8),
-            Text(title),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isBlocked ? Colors.grey.shade500 : null,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isBlocked ? Colors.grey.shade400 : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isBlocked)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Web Only',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+                ),
+              )
+            else
+              const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
           ],
         ),
       ),
     );
-  }
-}
+  }}
 
 class _FooterButton extends StatelessWidget {
   final String text;

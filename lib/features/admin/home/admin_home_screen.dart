@@ -5,6 +5,7 @@ import '../../../core/constants/colors.dart';
 import '../widgets/admin_kegiatan_card.dart';
 import '../../../core/widgets/animations/fade_in_slide.dart';
 import '../../../data/datasources/local/shared_prefs_helper.dart';
+import '../../../data/datasources/remote/api_client.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -701,9 +702,24 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
           ),
           ElevatedButton(
             onPressed: () async {
-              await SharedPrefsHelper.clearAdminSession();
               Navigator.pop(context);
-              context.go('/login-method');
+              
+              // Call logout API
+              final apiClient = ApiClient();
+              await apiClient.logout();
+              
+              // Clear admin session
+              await SharedPrefsHelper.clearAdminSession();
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Anda telah logout'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                context.go('/login-method');
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -714,6 +730,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
       ),
     );
   }
+  
 }
 
 class _StatCircle extends StatelessWidget {

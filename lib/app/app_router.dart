@@ -4,7 +4,6 @@ import '../core/constants/colors.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/auth/login_method_screen.dart';
-import '../features/karyawan/login/login_karyawan_screen.dart';
 import '../features/karyawan/login/register_screen.dart';
 import '../features/karyawan/home/karyawan_home_screen.dart';
 import '../features/karyawan/presensi/presensi_page.dart';
@@ -15,7 +14,6 @@ import '../features/karyawan/upload/upload_foto_screen.dart';
 import '../features/karyawan/upload/upload_aktivitas_screen.dart';
 import '../features/karyawan/profile/ganti_password_screen.dart';
 
-import '../features/admin/login/login_perusahaan_screen.dart';
 import '../features/admin/home/admin_home_screen.dart';
 import '../features/admin/kegiatan/input_kegiatan_screen.dart';
 import '../features/admin/kegiatan/edit_kegiatan_screen.dart';
@@ -27,7 +25,6 @@ import '../features/admin/tracking/tracking_maps_screen.dart';
 import '../features/admin/organisasi/organisasi_screen.dart';
 import '../features/admin/notifikasi/kirim_notif_screen.dart';
 
-import '../features/personal/login/personal_login_screen.dart';
 import '../features/personal/home/personal_home_screen.dart';
 import '../features/personal/upload/personal_upload_screen.dart';
 import '../features/personal/galeri/galeri_aktivitas_screen.dart';
@@ -41,6 +38,8 @@ import '../features/settings/version_screen.dart';
 import '../features/karyawan/settings/karyawan_settings_screen.dart';
 import '../features/admin/settings/admin_settings_screen.dart';
 import '../features/personal/settings/personal_settings_screen.dart';
+import '../features/auth/unified_login_screen.dart';
+
 
 // Temporary placeholders for Phase 1.2, 1.3, 1.4
 // Remove these when actual screens are created
@@ -106,26 +105,6 @@ class AppRouter {
             ),
           ),
           
-          GoRoute(
-            path: '/login-karyawan',
-            name: 'login-karyawan',
-            pageBuilder: (context, state) => CustomTransitionPage(
-              key: state.pageKey,
-              child: const LoginKaryawanScreen(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(1, 0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  )),
-                  child: child,
-                );
-              },
-            ),
-          ),
           GoRoute(
             path: '/register',
             name: 'register',
@@ -198,26 +177,7 @@ class AppRouter {
               child: const GantiPasswordScreen(),
             ),
           ),
-          GoRoute(
-            path: '/login-perusahaan',
-            name: 'login-perusahaan',
-            pageBuilder: (context, state) => CustomTransitionPage(
-              key: state.pageKey,
-              child: const LoginPerusahaanScreen(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(1, 0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  )),
-                  child: child,
-                );
-              },
-            ),
-          ),
+
           GoRoute(
             path: '/admin-home',
             name: 'admin-home',
@@ -298,26 +258,7 @@ class AppRouter {
               child: const KirimNotifScreen(),
             ),
           ),
-          GoRoute(
-            path: '/personal-login',
-            name: 'personal-login',
-            pageBuilder: (context, state) => CustomTransitionPage(
-              key: state.pageKey,
-              child: const PersonalLoginScreen(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(1, 0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  )),
-                  child: child,
-                );
-              },
-            ),
-          ),
+
           GoRoute(
             path: '/personal-home',
             name: 'personal-home',
@@ -413,6 +354,30 @@ class AppRouter {
               key: state.pageKey,
               child: const PersonalSettingsScreen(),
             ),
+          ),
+
+          GoRoute(
+            path: '/login',
+            name: 'login',
+            pageBuilder: (context, state) {
+              final roleHint = state.extra as String?;
+              return CustomTransitionPage(
+                key: state.pageKey,
+                child: UnifiedLoginScreen(roleHint: roleHint),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1, 0),
+                      end: Offset.zero,
+                    ).animate(CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    )),
+                    child: child,
+                  );
+                },
+              );
+            },
           ),
 
         // put router here lol
